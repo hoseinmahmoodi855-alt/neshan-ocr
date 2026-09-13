@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neshān &mdash; Persian &amp; English OCR</title>
+<meta name="description" content="Extract text from images in Persian and English using OCR.space.">
+<meta name="theme-color" content="#141414">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --ink: #141414;
+    --ink-soft: #3A3A38;
+    --paper: #FAF7F2;
+    --paper-dim: #F1ECE2;
+    --crimson: #A13B2A;
+    --crimson-deep: #7E2E20;
+    --border: #E4DFD5;
+    --border-dark: #2A2A28;
+    --success: #4C7A4C;
+    --sans: 'Inter', -apple-system, sans-serif;
+    --fa: 'Vazirmatn', 'Inter', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  :focus-visible { outline: 2px solid var(--crimson); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  header {
+    padding: 1.6rem 1.5rem 1.2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .brand { display: flex; align-items: baseline; gap: 0.5rem; }
+  .brand-mark { font-family: var(--sans); font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; }
+  .brand-mark .fa-letter { font-family: var(--fa); color: var(--crimson); }
+
+  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+  .install-btn, .settings-btn {
+    background: transparent;
+    border: 1.5px solid var(--border-dark);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.45rem 0.85rem;
+    border-radius: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .install-btn { display: none; }
+  .install-btn.visible { display: inline-block; }
+  .install-btn:hover, .settings-btn:hover { background: var(--ink); color: var(--paper); }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0.5rem 1.5rem 3rem;
+  }
+
+  /* ============ API KEY SETUP ============ */
+  .apikey-card {
+    border: 1.5px solid var(--border-dark);
+    border-radius: 6px;
+    background: white;
+    padding: 1.2rem 1.3rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .apikey-card h2 {
+    font-size: 1rem;
+    margin: 0 0 0.4rem;
+  }
+
+  .apikey-card p {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 0 0 0.9rem;
+    line-height: 1.6;
+  }
+
+  .apikey-card a { color: var(--crimson-deep); }
+
+  .apikey-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .apikey-row input {
+    flex: 1;
+    min-width: 200px;
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    padding: 0.55rem 0.7rem;
+    border: 1.5px solid var(--border-dark);
+    border-radius: 4px;
+    background: var(--paper-dim);
+    color: var(--ink);
+  }
+
+  .apikey-row button {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    background: var(--crimson);
+    color: white;
+    white-space: nowrap;
+  }
+  .apikey-row button:hover { background: var(--crimson-deep); }
+
+  .apikey-status {
+    font-size: 0.8rem;
+    margin-top: 0.6rem;
+    display: none;
+  }
+  .apikey-status.visible { display: block; }
+  .apikey-status.saved { color: var(--success); }
+
+  .apikey-note {
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .active-key-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    background: var(--paper-dim);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.8rem;
+    margin-bottom: 1.1rem;
+  }
+  .active-key-bar.visible { display: flex; }
+  .active-key-bar button {
+    background: none;
+    border: none;
+    color: var(--crimson-deep);
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0.1rem;
+  }
+
+  /* ============ LANGUAGE SELECTOR ============ */
+  .lang-select-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  .lang-select-row .label {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .lang-chip {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1.5px solid var(--border-dark);
+    color: var(--ink);
+    background: white;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  .lang-chip[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ============ DROP ZONE ============ */
+  .drop-zone {
+    border: 2px dashed var(--border-dark);
+    border-radius: 8px;
+    background: white;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .drop-zone.dragover {
+    border-color: var(--crimson);
+    background: #FBF1EE;
+  }
+
+  .drop-zone.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .drop-zone svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--ink-soft);
+    margin-bottom: 0.8rem;
+  }
+
+  .drop-zone .primary-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+  }
+
+  .drop-zone .secondary-text {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .drop-zone-buttons {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    margin-top: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  .zone-btn {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+  }
+
+  .zone-btn.primary { background: var(--crimson); color: white; }
+  .zone-btn.primary:hover { background: var(--crimson-deep); }
+  .zone-btn.secondary { background: transparent; border: 1.5px solid var(--border-dark); color: var(--ink); }
+  .zone-btn.secondary:hover { background: var(--ink); color: white; }
+
+  #file-input, #camera-input { display: none; }
+
+  /* ============ PREVIEW ============ */
+  .preview-section { display: none; margin-top: 1.3rem; }
+  .preview-section.visible { display: block; }
+
+  .preview-frame {
+    border: 1.5px solid var(--border-dark);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--paper-dim);
+    position: relative;
+  }
+
+  .preview-frame img {
+    display: block;
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    background: repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+  }
+
+  .preview-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: white;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .preview-controls .file-name {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 240px;
+  }
+
+  .preview-actions { display: flex; gap: 0.5rem; }
+
+  .btn-small {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1.5px solid var(--border-dark);
+    background: white;
+    color: var(--ink);
+  }
+
+  .btn-small:hover { background: var(--ink); color: white; }
+  .btn-small.run { background: var(--crimson); border-color: var(--crimson); color: white; }
+  .btn-small.run:hover { background: var(--crimson-deep); border-color: var(--crimson-deep); }
+  .btn-small:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ============ PROGRESS ============ */
+  .progress-section {
+    margin-top: 1rem;
+    display: none;
+  }
+  .progress-section.visible { display: block; }
+
+  .progress-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+
+  .spinner-ring {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--crimson);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============ RESULT ============ */
+  .result-section {
+    margin-top: 1.6rem;
+    display: none;
+  }
+  .result-section.visible { display: block; }
+
+  .result-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-top: 3px double var(--ink);
+    padding-top: 1rem;
+    margin-bottom: 0.7rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .result-heading h2 { font-family: var(--sans); font-size: 1.15rem; margin: 0; }
+
+  .engine-tag {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .result-box {
+    border: 1.5px solid var(--border-dark);
+    border-radius: 6px;
+    background: white;
+    padding: 1.2rem;
+  }
+
+  .result-text {
+    width: 100%;
+    min-height: 160px;
+    border: none;
+    outline: none;
+    resize: vertical;
+    font-size: 1.05rem;
+    line-height: 1.85;
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .result-text.is-fa { font-family: var(--fa); direction: rtl; text-align: right; }
+  .result-text.is-en { font-family: var(--sans); direction: ltr; text-align: left; }
+  .result-text.is-mixed { font-family: var(--fa); direction: rtl; text-align: right; }
+
+  .result-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .char-count { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-soft); }
+  .result-actions { display: flex; gap: 0.5rem; }
+
+  /* ============ ERROR / EMPTY ============ */
+  .status-note {
+    font-size: 0.85rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+    display: none;
+    line-height: 1.55;
+  }
+  .status-note.visible { display: block; }
+  .status-note.error { background: #FBF1EE; color: var(--crimson-deep); border: 1px solid #E8C9C1; }
+  .status-note.info { background: var(--paper-dim); color: var(--ink-soft); border: 1px solid var(--border); }
+
+  .method-note {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--border-dark);
+    padding: 0.6rem 0.9rem;
+    margin: 0 0 1.3rem;
+    background: rgba(20,20,20,0.03);
+  }
+  .method-note strong { color: var(--ink); }
+
+  footer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem 2.5rem;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 0.85rem;
+    padding: 0.6rem 1.05rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    max-width: 90vw;
+    text-align: center;
+    z-index: 100;
+  }
+  .toast.visible { opacity: 1; }
+
+  @media (max-width: 480px) {
+    .brand-mark { font-size: 1.15rem; }
+    .drop-zone { padding: 1.8rem 1rem; }
+    .preview-controls .file-name { max-width: 140px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="brand-mark">Neshān<span class="fa-letter"> نشان</span></span>
+  </div>
+  <div class="header-actions">
+    <button class="settings-btn" id="settings-btn" type="button">API key</button>
+    <button class="install-btn" id="install-btn" type="button">Install app</button>
+  </div>
+</header>
+
+<main>
+  <p class="method-note">
+    <strong>How it works:</strong> Neshān sends your image to <a href="https://ocr.space" target="_blank" rel="noopener">OCR.space</a>, a cloud OCR service, using your own free API key. Persian requires their Engine 3, which is included free (2,500 recognitions/month, on top of 25,000 for Latin-script languages). Your key is stored only in your browser, never sent anywhere except OCR.space.
+  </p>
+
+  <div class="apikey-card" id="apikey-card">
+    <h2>Enter your OCR.space API key</h2>
+    <p>Don't have one yet? <a href="https://ocr.space/ocrapi/freekey" target="_blank" rel="noopener">Get a free key here</a> &mdash; it takes about a minute, no credit card needed.</p>
+    <div class="apikey-row">
+      <input type="text" id="apikey-input" placeholder="Paste your API key here" autocomplete="off" spellcheck="false">
+      <button id="apikey-save-btn" type="button">Save key</button>
+    </div>
+    <div class="apikey-status" id="apikey-status"></div>
+    <p class="apikey-note">Your key is saved only in this browser's local storage on this device &mdash; it is never sent to any server other than OCR.space's API when you run a recognition.</p>
+  </div>
+
+  <div class="active-key-bar" id="active-key-bar">
+    <span>API key saved (<span id="key-preview"></span>) &mdash; ready to use.</span>
+    <button id="change-key-btn" type="button">Change key</button>
+  </div>
+
+  <div class="lang-select-row" role="group" aria-label="Recognition language">
+    <span class="label">Recognize:</span>
+    <button class="lang-chip" data-lang="auto" aria-pressed="true" type="button">Auto-detect (Persian + any language)</button>
+    <button class="lang-chip" data-lang="eng" aria-pressed="false" type="button">English only (faster)</button>
+  </div>
+
+  <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload an image">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    <div class="primary-text">Drop an image here, or choose a file</div>
+    <div class="secondary-text">JPG, PNG, or WEBP, up to 1 MB &mdash; a clear, well-lit photo works best</div>
+    <div class="drop-zone-buttons">
+      <button class="zone-btn primary" id="choose-file-btn" type="button">Choose image</button>
+      <button class="zone-btn secondary" id="camera-btn" type="button">Use camera</button>
+    </div>
+    <input type="file" id="file-input" accept="image/*">
+    <input type="file" id="camera-input" accept="image/*" capture="environment">
+  </div>
+
+  <div class="preview-section" id="preview-section">
+    <div class="preview-frame">
+      <img id="preview-img" alt="Selected image preview">
+      <div class="preview-controls">
+        <span class="file-name" id="file-name-label"></span>
+        <div class="preview-actions">
+          <button class="btn-small" id="replace-btn" type="button">Replace</button>
+          <button class="btn-small run" id="run-ocr-btn" type="button">Extract text</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-section" id="progress-section">
+    <div class="progress-label">
+      <span class="spinner-ring"></span>
+      <span id="progress-text">Sending to OCR.space…</span>
+    </div>
+  </div>
+
+  <div class="status-note" id="status-note"></div>
+
+  <div class="result-section" id="result-section">
+    <div class="result-heading">
+      <h2>Extracted text</h2>
+      <span class="engine-tag" id="engine-tag"></span>
+    </div>
+    <div class="result-box">
+      <textarea class="result-text" id="result-text" spellcheck="false" placeholder="Extracted text will appear here — you can edit it before copying."></textarea>
+      <div class="result-footer">
+        <span class="char-count"><span id="result-char-count">0</span> characters</span>
+        <div class="result-actions">
+          <button class="btn-small" id="copy-result-btn" type="button">Copy text</button>
+          <button class="btn-small" id="download-result-btn" type="button">Download .txt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Neshān uses the OCR.space cloud API with your personal free-tier key. Your images are sent to OCR.space's servers for processing (they state they do not retain images or results). Accuracy depends on image quality, lighting, and font clarity &mdash; for critical documents, always double-check extracted text against the original.
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ============ PWA: Service worker ============
+  // manifest.json and sw.js are now real files served alongside this page
+  // (not generated as Blob URLs), so tools like PWABuilder can fetch them
+  // directly when packaging this app for Android.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+
+  // ============ PWA: Install prompt ============
+  let deferredPrompt = null;
+  const installBtn = document.getElementById("install-btn");
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.classList.add("visible");
+  });
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.classList.remove("visible");
+  });
+  window.addEventListener("appinstalled", () => installBtn.classList.remove("visible"));
+
+  // ============ Toast ============
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.add("visible");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("visible"), 2600);
+  }
+
+  // ============ Elements ============
+  const apikeyCard = document.getElementById("apikey-card");
+  const apikeyInput = document.getElementById("apikey-input");
+  const apikeySaveBtn = document.getElementById("apikey-save-btn");
+  const apikeyStatus = document.getElementById("apikey-status");
+  const activeKeyBar = document.getElementById("active-key-bar");
+  const keyPreview = document.getElementById("key-preview");
+  const changeKeyBtn = document.getElementById("change-key-btn");
+  const settingsBtn = document.getElementById("settings-btn");
+
+  const dropZone = document.getElementById("drop-zone");
+  const fileInput = document.getElementById("file-input");
+  const cameraInput = document.getElementById("camera-input");
+  const chooseFileBtn = document.getElementById("choose-file-btn");
+  const cameraBtn = document.getElementById("camera-btn");
+  const previewSection = document.getElementById("preview-section");
+  const previewImg = document.getElementById("preview-img");
+  const fileNameLabel = document.getElementById("file-name-label");
+  const replaceBtn = document.getElementById("replace-btn");
+  const runOcrBtn = document.getElementById("run-ocr-btn");
+  const progressSection = document.getElementById("progress-section");
+  const progressText = document.getElementById("progress-text");
+  const statusNote = document.getElementById("status-note");
+  const resultSection = document.getElementById("result-section");
+  const resultText = document.getElementById("result-text");
+  const resultCharCount = document.getElementById("result-char-count");
+  const engineTag = document.getElementById("engine-tag");
+  const copyResultBtn = document.getElementById("copy-result-btn");
+  const downloadResultBtn = document.getElementById("download-result-btn");
+  const langChips = document.querySelectorAll(".lang-chip");
+
+  let selectedLang = "auto";
+  let currentFile = null;
+  let currentObjectUrl = null;
+
+  const MAX_DIMENSION = 2200;
+  const MAX_FILE_BYTES = 1024 * 1024; // OCR.space free tier: 1 MB limit
+
+  // ============ API key management ============
+  function getApiKey() {
+    try { return localStorage.getItem("neshan-ocrspace-key") || ""; } catch (e) { return ""; }
+  }
+
+  function setApiKey(key) {
+    try { localStorage.setItem("neshan-ocrspace-key", key); } catch (e) {}
+  }
+
+  function clearApiKey() {
+    try { localStorage.removeItem("neshan-ocrspace-key"); } catch (e) {}
+  }
+
+  function maskKey(key) {
+    if (key.length <= 6) return key;
+    return key.slice(0, 4) + "…" + key.slice(-4);
+  }
+
+  function refreshKeyUI() {
+    const key = getApiKey();
+    if (key) {
+      apikeyCard.style.display = "none";
+      activeKeyBar.classList.add("visible");
+      keyPreview.textContent = maskKey(key);
+      dropZone.classList.remove("disabled");
+    } else {
+      apikeyCard.style.display = "block";
+      activeKeyBar.classList.remove("visible");
+      dropZone.classList.add("disabled");
+    }
+  }
+
+  apikeySaveBtn.addEventListener("click", () => {
+    const key = apikeyInput.value.trim();
+    if (!key) {
+      apikeyStatus.textContent = "Please paste a key first.";
+      apikeyStatus.classList.add("visible");
+      apikeyStatus.classList.remove("saved");
+      return;
+    }
+    setApiKey(key);
+    apikeyStatus.textContent = "Saved.";
+    apikeyStatus.classList.add("visible", "saved");
+    apikeyInput.value = "";
+    refreshKeyUI();
+    showToast("API key saved to this browser.");
+  });
+
+  apikeyInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") apikeySaveBtn.click();
+  });
+
+  changeKeyBtn.addEventListener("click", () => {
+    clearApiKey();
+    refreshKeyUI();
+    apikeyInput.focus();
+  });
+
+  settingsBtn.addEventListener("click", () => {
+    apikeyCard.style.display = "block";
+    apikeyCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    apikeyInput.focus();
+  });
+
+  // ============ Language selection ============
+  langChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      langChips.forEach((c) => c.setAttribute("aria-pressed", "false"));
+      chip.setAttribute("aria-pressed", "true");
+      selectedLang = chip.dataset.lang;
+    });
+  });
+
+  // ============ Status helpers ============
+  function setStatus(msg, type) {
+    statusNote.textContent = msg || "";
+    statusNote.classList.remove("error", "info", "visible");
+    if (msg) {
+      statusNote.classList.add("visible");
+      if (type) statusNote.classList.add(type);
+    }
+  }
+
+  // ============ File handling ============
+  function isValidImage(file) {
+    return file && file.type && file.type.startsWith("image/");
+  }
+
+  function downscaleIfNeeded(file) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        const { width, height } = img;
+        const longEdge = Math.max(width, height);
+        const needsResize = width && height && (longEdge > MAX_DIMENSION || file.size > MAX_FILE_BYTES);
+        if (!needsResize) {
+          URL.revokeObjectURL(url);
+          resolve(file);
+          return;
+        }
+        try {
+          const scale = Math.min(1, MAX_DIMENSION / longEdge);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(width * scale);
+          canvas.height = Math.round(height * scale);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          URL.revokeObjectURL(url);
+          tryCompress(canvas, 0.9);
+        } catch (e) {
+          console.warn("Downscale failed, using original image:", e);
+          URL.revokeObjectURL(url);
+          resolve(file);
+        }
+
+        function tryCompress(canvas, quality) {
+          canvas.toBlob((blob) => {
+            if (!blob) { resolve(file); return; }
+            if (blob.size <= MAX_FILE_BYTES || quality <= 0.4) {
+              resolve(blob);
+            } else {
+              tryCompress(canvas, quality - 0.15);
+            }
+          }, "image/jpeg", quality);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file);
+      };
+      img.src = url;
+    });
+  }
+
+  function handleFile(file) {
+    if (!isValidImage(file)) {
+      setStatus("That doesn't look like an image file. Please choose a JPG, PNG, or WEBP.", "error");
+      return;
+    }
+    setStatus("");
+    currentFile = file;
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = URL.createObjectURL(file);
+    previewImg.src = currentObjectUrl;
+    fileNameLabel.textContent = file.name || "captured-image.jpg";
+    previewSection.classList.add("visible");
+    resultSection.classList.remove("visible");
+    progressSection.classList.remove("visible");
+    previewSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  chooseFileBtn.addEventListener("click", (e) => { e.stopPropagation(); fileInput.click(); });
+  cameraBtn.addEventListener("click", (e) => { e.stopPropagation(); cameraInput.click(); });
+  dropZone.addEventListener("click", () => {
+    if (!getApiKey()) { settingsBtn.click(); return; }
+    fileInput.click();
+  });
+  dropZone.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dropZone.click(); }
+  });
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files && fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+  cameraInput.addEventListener("change", () => {
+    if (cameraInput.files && cameraInput.files[0]) handleFile(cameraInput.files[0]);
+  });
+
+  replaceBtn.addEventListener("click", () => fileInput.click());
+
+  ["dragenter", "dragover"].forEach((evt) => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.add("dragover");
+    });
+  });
+  ["dragleave", "drop"].forEach((evt) => {
+    dropZone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropZone.classList.remove("dragover");
+    });
+  });
+  dropZone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  window.addEventListener("paste", (e) => {
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type && item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) { handleFile(file); break; }
+      }
+    }
+  });
+
+  // ============ OCR via OCR.space ============
+  function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function detectScriptClass(text) {
+    const persianChars = (text.match(/[\u0600-\u06FF]/g) || []).length;
+    const latinChars = (text.match(/[A-Za-z]/g) || []).length;
+    if (persianChars > 0 && latinChars > 0) return "is-mixed";
+    if (persianChars > latinChars) return "is-fa";
+    return "is-en";
+  }
+
+  async function callOcrSpace(base64Image, lang, apiKey) {
+    const params = new URLSearchParams();
+    params.append("apikey", apiKey);
+    params.append("base64Image", base64Image);
+    params.append("isOverlayRequired", "false");
+    params.append("detectOrientation", "true");
+    params.append("scale", "true");
+
+    if (lang === "auto") {
+      params.append("OCREngine", "3");
+    } else {
+      params.append("OCREngine", "2");
+      params.append("language", lang);
+    }
+
+    const res = await fetch("https://api.ocr.space/parse/image", {
+      method: "POST",
+      body: params
+    });
+
+    if (!res.ok) {
+      throw new Error("OCR.space HTTP " + res.status);
+    }
+
+    const data = await res.json();
+
+    if (data.IsErroredOnProcessing) {
+      const msg = Array.isArray(data.ErrorMessage) ? data.ErrorMessage.join(" ") : (data.ErrorMessage || "Unknown API error");
+      throw new Error(msg);
+    }
+
+    const results = data.ParsedResults;
+    if (!results || !results.length) {
+      throw new Error("No results returned from OCR.space");
+    }
+
+    const text = results.map((r) => r.ParsedText || "").join("\n").trim();
+    return text;
+  }
+
+  runOcrBtn.addEventListener("click", async () => {
+    if (!currentFile) return;
+
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      setStatus("Please save your OCR.space API key first (use the \"API key\" button above).", "error");
+      settingsBtn.click();
+      return;
+    }
+
+    if (!navigator.onLine) {
+      setStatus("You're offline. This app needs an internet connection to reach OCR.space.", "error");
+      return;
+    }
+
+    setStatus("");
+    runOcrBtn.disabled = true;
+    replaceBtn.disabled = true;
+    resultSection.classList.remove("visible");
+    progressSection.classList.add("visible");
+    progressText.textContent = "Preparing image…";
+
+    try {
+      const ocrInput = await downscaleIfNeeded(currentFile);
+      const base64 = await blobToBase64(ocrInput);
+
+      progressText.textContent = "Sending to OCR.space…";
+      const text = await callOcrSpace(base64, selectedLang, apiKey);
+
+      progressSection.classList.remove("visible");
+      runOcrBtn.disabled = false;
+      replaceBtn.disabled = false;
+
+      if (!text) {
+        setStatus("No text was detected in this image. Try a clearer photo with better lighting or higher resolution.", "info");
+        return;
+      }
+
+      resultText.value = text;
+      resultText.className = "result-text " + detectScriptClass(text);
+      resultCharCount.textContent = text.length;
+      engineTag.textContent = selectedLang === "auto" ? "OCR.space · Engine 3" : "OCR.space · Engine 2";
+
+      resultSection.classList.add("visible");
+      resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    } catch (err) {
+      console.error("OCR failure:", err);
+      progressSection.classList.remove("visible");
+      runOcrBtn.disabled = false;
+      replaceBtn.disabled = false;
+
+      let detail = (err && err.message) ? err.message : "Unknown error";
+      let friendlyHint = "";
+
+      if (/E101|apikey/i.test(detail)) {
+        friendlyHint = " Double-check that your API key was pasted correctly.";
+      } else if (/limit|quota|rate/i.test(detail)) {
+        friendlyHint = " You may have hit your free-tier daily or monthly limit — check your usage at ocr.space.";
+      } else if (/size|too large|1 ?MB/i.test(detail)) {
+        friendlyHint = " Try a smaller or more compressed image.";
+      }
+
+      setStatus("OCR.space couldn't process this image: " + detail + "." + friendlyHint, "error");
+    }
+  });
+
+  // ============ Result actions ============
+  copyResultBtn.addEventListener("click", async () => {
+    if (!resultText.value) return;
+    try {
+      await navigator.clipboard.writeText(resultText.value);
+      showToast("Copied to clipboard.");
+    } catch (e) {
+      resultText.select();
+      showToast("Select and copy manually if the button didn't work.");
+    }
+  });
+
+  downloadResultBtn.addEventListener("click", () => {
+    if (!resultText.value) return;
+    const blob = new Blob([resultText.value], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "extracted-text.txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  resultText.addEventListener("input", () => {
+    resultCharCount.textContent = resultText.value.length;
+  });
+
+  // ============ Online/offline ============
+  window.addEventListener("offline", () => {
+    setStatus("You're offline. This app needs an internet connection to reach OCR.space.", "error");
+  });
+
+  // ============ Init ============
+  refreshKeyUI();
+
+})();
+</script>
+
+</body>
+</html>
